@@ -20,6 +20,7 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
+
 REGEX_IDENTIFIER='^[a-zA-Z_][a-zA-Z0-9_]*$'
 REGEX_PASSWORD='^[a-zA-Z0-9_~!@#$%^&*()-=<>,.?;:|]+$'
 REGEX_NUMBER='^[1-9][0-9]*$'
@@ -62,6 +63,7 @@ export PGPASSWORD=${PG_USER_PASSWORD}
 export PGDATABASE=${PG_DATABASE}
 
 # wait for poostgresql to be ready 
-/usr/libexec/check-container --live 
+/usr/libexec/check-container --live
 
-exec /usr/pgsql-12/bin/psql -w "$@"
+# Start ngnix 
+exec /usr/sbin/nginx -g "daemon off;"

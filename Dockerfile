@@ -32,6 +32,10 @@ ENV PGVERSION="12"
 ENV NGINX_VERSION=1.6.3
 ENV PGROOT="/usr/pgsql-${PGVERSION}"
 
+ENV APP_DATA="/opt/app-root"
+
+COPY root/ /
+
 RUN rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
 	&& rpm -Uvh https://download.postgresql.org/pub/repos/yum/12/redhat/rhel-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm \
 	&& yum -y update \
@@ -40,31 +44,34 @@ RUN rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.
 	&& yum install -y --setopt=tsflags=nodocs nginx \
 	&& yum -y clean all
 
-COPY root/ /
+COPY ./s2i/bin/ /usr/libexec/s2i
 
 RUN mkdir -p /opt/sql /opt/pgtools
 
 COPY pgtools/ /opt/pgtools/
 
-RUN sed -i 's/80/8080/' /etc/nginx/nginx.conf
-RUN sed -i 's/user nginx;//' /etc/nginx/nginx.conf
-
-RUN chown -R 26:26 /usr/share/nginx
-RUN chown -R 26:26 /var/log/nginx
-RUN chown -R 26:26 /var/lib/nginx
-RUN touch /run/nginx.pid
-RUN chown -R 26:26 /run/nginx.pid
-RUN chown -R 26:26 /etc/nginx
-RUN chown -R 26:26 /opt/pgtools/
-
 RUN usermod -a -G root postgres
 
-COPY ./s2i/bin/ /usr/libexec/s2i
+RUN sed -i 's/80/8080/' /etc/nginx/nginx.conf \
+	&& sed -i 's/user nginx;//' /etc/nginx/nginx.conf
+
+#clear dangling refreces
+
+RUN /usr/libexec/fix-permissions /usr/share/nginx \
+	&& /usr/libexec/fix-permissions /var/log/nginx \
+	&& /usr/libexec/fix-permissions /var/lib/nginx
+RUN touch /run/nginx.pid 
+RUN /usr/libexec/fix-permissions /run/nginx.pid \
+	&& /usr/libexec/fix-permissions /etc/nginx \
+	&& /usr/libexec/fix-permissions /opt/pgtools/
 
 VOLUME [ "/usr/share/nginx" ]
 
-USER 26
-
 EXPOSE 8080
 
-ENTRYPOINT ["/usr/libexec/s2i/run"]
+RUN /usr/libexec/fix-permissions ${APP_DATA}
+
+USER 26
+
+ENTRYPOINT ["container-entrypoint"]
+CMD ["/usr/libexec/s2i/run"]

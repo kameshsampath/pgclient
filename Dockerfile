@@ -33,30 +33,37 @@ ENV NGINX_VERSION=1.6.3
 ENV PGROOT="/usr/pgsql-${PGVERSION}"
 
 RUN rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
-	&& rpm -Uvh https://download.postgresql.org/pub/repos/yum/12/redhat/rhel-7-x86_64/pgdg-redhat-repo-42.0-8.noarch.rpm \
+	&& rpm -Uvh https://download.postgresql.org/pub/repos/yum/12/redhat/rhel-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm \
 	&& yum -y update \
-	&& yum -y install postgresql12 pgbadger \
-	&& yum install -y epel-release && \
-	yum install -y --setopt=tsflags=nodocs nginx \
+	&& yum -y install java-1.8.0-openjdk postgresql12 postgresql12-server postgresql12-contrib postgresql12-libs crontabs nss_wrapper gettext bind-utils pgbadger \
+	&& yum install -y epel-release \
+	&& yum install -y --setopt=tsflags=nodocs nginx \
 	&& yum -y clean all
 
 COPY root/ /
 
-RUN mkdir -p /opt/sql
+RUN mkdir -p /opt/sql /opt/pgtools
+
+COPY pgtools/ /opt/pgtools/
 
 RUN sed -i 's/80/8080/' /etc/nginx/nginx.conf
 RUN sed -i 's/user nginx;//' /etc/nginx/nginx.conf
 
-RUN chown -R 1001:1001 /usr/share/nginx
-RUN chown -R 1001:1001 /var/log/nginx
-RUN chown -R 1001:1001 /var/lib/nginx
+RUN chown -R 26:26 /usr/share/nginx
+RUN chown -R 26:26 /var/log/nginx
+RUN chown -R 26:26 /var/lib/nginx
 RUN touch /run/nginx.pid
-RUN chown -R 1001:1001 /run/nginx.pid
-RUN chown -R 1001:1001 /etc/nginx
+RUN chown -R 26:26 /run/nginx.pid
+RUN chown -R 26:26 /etc/nginx
+RUN chown -R 26:26 /opt/pgtools/
+
+RUN usermod -a -G root postgres
 
 COPY ./s2i/bin/ /usr/libexec/s2i
 
-USER 1001
+VOLUME [ "/usr/share/nginx" ]
+
+USER 26
 
 EXPOSE 8080
 

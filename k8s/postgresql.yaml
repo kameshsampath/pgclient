@@ -5,7 +5,7 @@ metadata:
   name: postgresql
 spec:
   selector:
-    app: postgres
+    app: postgresql
   ports:
     - name: pgsql
       port: 5432
@@ -18,24 +18,27 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: postgres
+  name: postgresql
 spec:
   selector:
     matchLabels:
-      app: postgres
+      app: postgresql
   template:
     metadata:
       labels:
-        app: postgres
+        app: postgresql
     spec:
       containers:
-        - name: postgres
-          image: rhdevelopers/openshift-pgsql12-primary:centos7-monitoring
+        - name: postgresql
+          image: quay.io/rhdevelopers/openshift-pgsql12-primary:centos7-monitoring
           imagePullPolicy: IfNotPresent
           resources:
             limits:
-              memory: "1Gi"
-              cpu: "500m"
+              memory: "3Gi"
+              cpu: "1500m"
+            requests:
+              memory: "3Gi"
+              cpu: "1500m"
           ports:
             - name: tcp
               containerPort: 5432
@@ -49,15 +52,18 @@ spec:
             - name: PG_NETWORK_MASK
               value: all
             - name: PG_MAX_CONNECTIONS
-              value: "100"
+              value: "500"
+            # 25% of the memory in mb
             - name: PG_SHARED_BUFFERS
-              value: "256"
+              value: "768"
             - name: PG_WORK_MEM
               value: "1536"
+            # 75% of the memory in GB
             - name: PG_EFFECTIVE_CACHE_SIZE
-              value: "1"
+              value: "2"
             - name: PG_EFFECTIVE_IO
               value: "128"
+            # 20% of the Disk size
             - name: PG_MAX_WAL_SIZE
               value: "1"
           volumeMounts:
@@ -66,7 +72,7 @@ spec:
             - mountPath: /pgwal
               name: pgwal
         - name: client
-          image: rhdevelopers/openshift-pgsql12-primary:centos7-clients
+          image: quay.io/rhdevelopers/openshift-pgsql12-primary:centos7-clients
           imagePullPolicy: IfNotPresent
           resources:
             limits:

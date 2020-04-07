@@ -1,7 +1,7 @@
-version: "3.1"
+version: "3.7"
 services:
   postgresql:
-    image: quay.io/redhatdemo/openshift-pgsql12-primary:centos7
+    build: /Users/kameshs/git/rhdemo/openshift-pgsql12-primary-centos7
     ports:
       - "5432:5432"
     environment:
@@ -9,7 +9,17 @@ services:
       PG_USER_NAME: demo
       PG_DATABASE: gamedb
       PG_NETWORK_MASK: all
-  pgclient:
+      PG_MAX_CONNECTIONS: 100
+      PG_SHARED_BUFFERS: 256
+      PG_WORK_MEM: 1536
+      PG_EFFECTIVE_CACHE_SIZE: 1
+      PG_EFFECTIVE_IO: 128
+      PG_MAX_WAL_SIZE: 1
+    volumes:
+      - type: bind
+        source: /Users/kameshs/git/rhdemo/openshift-pgsql12-primary-centos7/pgdata
+        target: /pgdata
+  client:
     build: ./
     depends_on: ["postgresql"]
     environment:
@@ -17,5 +27,9 @@ services:
       PG_USER_NAME: demo
       PG_DATABASE: gamedb
       PG_HOST: postgresql
-      PG_PORT: 5432
-    command: ["-c", "SELECT now()"]
+    ports:
+      - "8080:8080"
+    volumes:
+      - type: bind
+        source: /Users/kameshs/git/rhdemo/openshift-pgsql12-primary-centos7/pgdata
+        target: /pgdata

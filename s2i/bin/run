@@ -43,6 +43,19 @@ EOF
   exit 1
 }
 
+# Generate passwd file based on current uid
+function generate_passwd_file() {
+  export USER_ID=$(id -u)
+  export GROUP_ID=$(id -g)
+  grep -v ^postgres /etc/passwd > "$HOME/passwd"
+  echo "postgres:x:${USER_ID}:${GROUP_ID}:PostgreSQL Server:/pgdata:/bin/bash" >> "$HOME/passwd"
+  export LD_PRELOAD='/usr/lib64/libnss_wrapper.so'
+  export NSS_WRAPPER_PASSWD=$HOME/passwd
+  export NSS_WRAPPER_GROUP=/etc/group
+}
+
+generate_passwd_file
+
 
 if [ -z "${PG_DATABASE}" ] ||
     [ -z "${PG_USER_NAME}" ] || [ -z "${PG_USER_PASSWORD}" ] ||
@@ -55,6 +68,13 @@ fi
 [[ "${PG_USER_NAME}" =~ $REGEX_IDENTIFIER ]] || usage
 [[ "${PG_USER_PASSWORD}" =~ $REGEX_PASSWORD ]] || usage
 
+
+function generate_pgpass_file() {
+  echo "${PG_HOST:-postgresql}:${PG_PORT:-5432}:${PG_DATABASE}:${PG_USER_NAME}:${PG_USER_PASSWORD}" >> "$HOME/.pgpass"
+  chmod 0600 "$HOME/.pgpass"
+}
+
+generate_pgpass_file
 
 export PGHOST=${PG_HOST:-postgresql}
 export PGPORT=${PG_PORT:-5432}

@@ -44,8 +44,6 @@ RUN rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.
 	&& yum install -y --setopt=tsflags=nodocs nginx \
 	&& yum -y clean all
 
-COPY ./s2i/bin/ /usr/libexec/s2i
-
 RUN mkdir -p /opt/sql /opt/pgtools
 
 COPY pgtools/ /opt/pgtools/
@@ -63,15 +61,14 @@ RUN /usr/libexec/fix-permissions /usr/share/nginx \
 RUN touch /run/nginx.pid 
 RUN /usr/libexec/fix-permissions /run/nginx.pid \
 	&& /usr/libexec/fix-permissions /etc/nginx \
-	&& /usr/libexec/fix-permissions /opt/pgtools/
+	&& /usr/libexec/fix-permissions /opt/pgtools \
+	&& /usr/libexec/fix-permissions /opt/sql \
+	/usr/libexec/fix-permissions ${APP_DATA}
 
-VOLUME [ "/usr/share/nginx" ]
+VOLUME [ "/usr/share/nginx","/opt/sql" ]
 
 EXPOSE 8080
 
-RUN /usr/libexec/fix-permissions ${APP_DATA}
-
 USER 26
 
-ENTRYPOINT ["container-entrypoint"]
-CMD ["/usr/libexec/s2i/run"]
+ENTRYPOINT ["/usr/bin/entrypoint-run"]

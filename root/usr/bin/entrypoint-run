@@ -68,22 +68,17 @@ fi
 [[ "${PG_USER_NAME}" =~ $REGEX_IDENTIFIER ]] || usage
 [[ "${PG_USER_PASSWORD}" =~ $REGEX_PASSWORD ]] || usage
 
-
-function generate_pgpass_file() {
-  echo "${PG_HOST:-postgresql}:${PG_PORT:-5432}:${PG_DATABASE}:${PG_USER_NAME}:${PG_USER_PASSWORD}" >> "$HOME/.pgpass"
-  chmod 0600 "$HOME/.pgpass"
-}
-
-generate_pgpass_file
-
 export PGHOST=${PG_HOST:-postgresql}
 export PGPORT=${PG_PORT:-5432}
 export PGUSER=${PG_USER_NAME}
 export PGPASSWORD=${PG_USER_PASSWORD}
 export PGDATABASE=${PG_DATABASE}
 
-# wait for poostgresql to be ready 
-/usr/libexec/check-container --live
+function generate_pgpass_file() {
+  echo "${PGHOST}:${PGPORT}:${PGDATABASE}:${PGUSER}:${PGPASSWORD}" >> "$HOME/.pgpass"
+  chmod 0600 "$HOME/.pgpass"
+}
 
-# Start ngnix 
-exec /usr/sbin/nginx -g "daemon off;"
+generate_pgpass_file
+
+exec "$@"
